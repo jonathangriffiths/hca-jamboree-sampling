@@ -5,40 +5,57 @@ source("~/Documents/hca-jamboree-sampling/rough/jonny/normalisation.R")
 source("~/Documents/hca-jamboree-sampling/rough/jonny/qc.R")
 
 
-counts = readMM("~/Documents/hca-jamboree-sampling/data/ica_bone_marrow_ref_set.mtx")
-genes = read.table("~/Documents/hca-jamboree-sampling/data/ica_bone_marrow_ref_set.genes.tsv")
-cells = read.table("~/Documents/hca-jamboree-sampling/data/ica_bone_marrow_ref_set.barcodes.tsv")
-rownames(counts) = genes[,2]
-rownames(cells) = cells[,1]
-counts = as(counts, "dgCMatrix")
 
-wrapper = function(count_matrix){
+
+wrapper = function(count_matrix,
+                   qc_function = c("simple"),
+                   min.umis = 1000, max.mito = 0.03,
+                   normalisation_method = c("scran", "clr", "cpm"),
+                   gene_selection_method = "scran",
+                   dimred_method = "pca",
+                   density_k = 10){
   #qc
-  count_matrix = qc_simple(count_matrix)
+  if(qc_function[1] == "simple"){
+    count_matrix = qc_simple(count_matrix, mito.frac = max.mito, min.umis = min.umis, gene_df = genes)
+  } else {
+    stop("No suitable QC method chosen.")
+  }
+  
   #normalise
-  norm_counts = normalise_scran(count_matrix)
+  if(normalisation_method[1] == "scran"){
+    norm_counts = normalise_scran(count_matrix)
+  } else if(normalisation_method[1] == "clr"){
+    norm_counts = normalise_clr(count_matrix)
+  } else if(normlisation_method[1] == "cpm"){
+    norm_counts = normalise_cpm(count_matrix)
+  } else {
+    stop("No suitable normalisation method chosen.")
+  }
+  
   #gene selection
-  norm_counts = scran_select(norm_counts)
+  if(gene_selection_method == "scran"){
+    norm_counts = scran_select(norm_counts)
+  } else {
+    stop("No suitable gene selection method chosen.")
+  }
+  
   #dimension reduction
-  dimred = dimred_pca(norm_counts, dims = 20)
+  if(dimred_function == "pca"){
+    dimred = dimred_pca(norm_counts, dims = 20)
+  } else{
+    stop("No suitable dimension reduction method chosen.")
+  }
+  
   #densities
-  densities = get_cell_densities(dimred)
+  densities = get_cell_densities(dimred, k = density_k)
+  
   #return
   return(list(densities = densities, dimred = dimred, retained_counts = norm_counts))
 }
 
-test = wrapper(counts)
+select_markers = function(){
+  #TODO: Bo.
+}
 
-tsne = Rtsne(test$dimred, pca = FALSE)
-
-p1 = ggplot(as.data.frame(tsne$Y), aes(x = V1, y = V2, col = test$densities)) +
-  geom_point() +
-  scale_color_viridis()
-
-p2 = ggplot(as.data.frame(tsne$Y), aes(x = V1, y = V2, col = test$retained_counts["ENSG00000198851",])) +
-  geom_point() +
-  scale_color_viridis(name=  "CD3E")
-
-plot_grid(p1, p2)
 
 
