@@ -7,10 +7,10 @@ source("~/Documents/hca-jamboree-sampling/rough/jonny/qc.R")
 
 
 
-wrapper = function(count_matrix,
+density_wrapper = function(count_matrix,
                    qc_function = c("simple"),
                    min.umis = 1000, max.mito = 0.03,
-                   normalisation_method = c("scran", "clr", "cpm"),
+                   normalisation_method = c("scran", "clr", "cpm", "none"),
                    gene_selection_method = "scran",
                    dimred_method = "pca",
                    density_k = 10){
@@ -26,8 +26,11 @@ wrapper = function(count_matrix,
     norm_counts = normalise_scran(count_matrix)
   } else if(normalisation_method[1] == "clr"){
     norm_counts = normalise_clr(count_matrix)
-  } else if(normlisation_method[1] == "cpm"){
+  } else if(normalisation_method[1] == "cpm"){
     norm_counts = normalise_cpm(count_matrix)
+  } else if(normalisation_method[1] == "none"){
+    print("Hmmmmm.....")
+    norm_counts = log2(count_matrix + 1)
   } else {
     stop("No suitable normalisation method chosen.")
   }
@@ -40,7 +43,7 @@ wrapper = function(count_matrix,
   }
   
   #dimension reduction
-  if(dimred_function == "pca"){
+  if(dimred_method == "pca"){
     dimred = dimred_pca(norm_counts, dims = 20)
   } else{
     stop("No suitable dimension reduction method chosen.")
