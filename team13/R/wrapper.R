@@ -11,7 +11,7 @@ density_wrapper = function(count_matrix,
   } else {
     stop("No suitable QC method chosen.")
   }
-
+  
   #normalise
   if(normalisation_method[1] == "scran"){
     norm_counts = normalise_scran(count_matrix)
@@ -25,24 +25,24 @@ density_wrapper = function(count_matrix,
   } else {
     stop("No suitable normalisation method chosen.")
   }
-
+  
   #gene selection
   if(gene_selection_method == "scran"){
     norm_counts = scran_select(norm_counts)
   } else {
     stop("No suitable gene selection method chosen.")
   }
-
+  
   #dimension reduction
   if(dimred_method == "pca"){
     dimred = dimred_pca(norm_counts, dims = 20)
   } else{
     stop("No suitable dimension reduction method chosen.")
   }
-
+  
   #densities
   densities = get_cell_densities(dimred, k = density_k)
-
+  
   #return
   return(list(densities = densities, dimred = dimred, retained_counts = norm_counts))
 }
@@ -50,3 +50,6 @@ density_wrapper = function(count_matrix,
 select_markers = function(){
   #TODO: Bo.
 }
+
+
+
