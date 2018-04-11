@@ -11,5 +11,6 @@ Imports:
     Matrix,
     SingleCellExperiment,
     scran,
-    scater
+    scater,
+    irlba
 RoxygenNote: 6.0.1

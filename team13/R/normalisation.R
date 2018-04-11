@@ -11,10 +11,11 @@ normalise_scran = function(count_matrix){
 }
 
 #log2( (count + pseudocount) / geom_mean(across cell) )
-normalise_clr = function(count_matrix){
-  geom_mean = apply(count_matrix, 2, function(x){exp(sum(log(x+1))/length(x))})
-  swept = sweep(count_matrix + 1, 2, geom_mean, "/")
-  return(log2(swept))
+normalise_clr = function(count_matrix, eps=1) {
+    count_matrix = as.matrix(count_matrix) + eps
+    geom_mean = exp(rowSums(log(count_matrix)) / nrow(count_matrix))
+    norm_counts = count_matrix / matrix(geom_mean, nrow=nrow(count_matrix), ncol=ncol(count_matrix), byrow=TRUE)
+    return(log2(norm_counts))
 }
 
 #log2 cpm
