@@ -1,9 +1,14 @@
 select_cells = function(wrapper_out, 
-                        method = c("quantile"),
+                        method = c("quantile", "mixmod"),
                         quantile = 0.5){
-  
+  #note that hits refers to a logical vector for low density cells
   if(method == "quantile"){
     hits = wrapper_out$densities <= quantile(wrapper_out$densities, quantile)
+  } else if(method == "mixmod"){
+    require(mixtools)
+    mixmod = normalmixEM(wrapper_out$densities, mu = c(min(wrapper_out$densities), max(wrapper_out$densities)))
+    small_dist = which.min(mixmod$mu)
+    hits = mixmod$posterior[,small_dist] > mixmod$posterior[,-small_dist]
   } else{
     "No suitable cell labelling method provided."
   }
@@ -43,5 +48,11 @@ find_genes = function(hits, model_counts, sample_fraction = 0.7, runs = 10, n_ge
   select = select[order(-select$avg),]
 
   return(select$gene[1:n_genes])
+  
+}
+
+
+
+make_gate = function(genes, densities, count_matrix){
   
 }

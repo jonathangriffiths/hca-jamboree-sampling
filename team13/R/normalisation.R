@@ -4,13 +4,13 @@ normalise_scran = function(count_matrix){
   require(scran)
   require(scater)
   
-  sce = SingleCellExperiment(assays = list(counts = count_matrix))
-  qclust= quickCluster(x = sce, method = "igraph", max.size = 3000, pc.approx = TRUE)
+  sce = SingleCellExperiment::SingleCellExperiment(assays = list(counts = count_matrix))
+  qclust= scran::quickCluster(x = sce, method = "igraph", max.size = 3000, pc.approx = TRUE)
   
-  sce = computeSumFactors(sce, clusters = qclust)
-  sce = normalise(sce)
+  sce = scran::computeSumFactors(sce, clusters = qclust)
+  sce = scater::normalise(sce)
   
-  return(logcounts(sce))
+  return(SingleCellExperiment::logcounts(sce))
     
 }
 
