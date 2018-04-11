@@ -12,3 +12,4 @@ Imports:
     SingleCellExperiment,
     scran,
     scater
+RoxygenNote: 6.0.1

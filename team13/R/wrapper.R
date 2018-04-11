@@ -1,34 +1,36 @@
 density_wrapper = function(count_matrix,
-                   qc_function = c("simple"),
+                   qc_method = c("simple"),
                    qc_params = list(),
                    normalisation_method = c("scran", "clr", "cpm", "none"),
+                   normalisation_params = list(),
                    gene_selection_method = "scran",
                    dimred_method = "pca",
                    density_k = 10){
 
-  qc_funcs <- list()
+  #QC
+  qc_funcs = list()
   qc_funcs$simple = qc_simple
 
-  qc_function = qc_function[1]
-  if (!(qc_function %in% names(qc_funcs))) {
-      stop("Unknwon QC method chosen:", qc_function)
+  qc_func = qc_funcs[[qc_method[1]]]
+  if (is.null(qc_func)) {
+      stop("Unknwon QC method chosen:", qc_method[1])
   }
   qc_params = c(list(count_matrix), qc_params)
-  do.call(qc_funcs[[qc_function]], qc_params)
+  count_matrix = do.call(qc_func, qc_params)
 
   #normalise
-  if(normalisation_method[1] == "scran"){
-    norm_counts = normalise_scran(count_matrix)
-  } else if(normalisation_method[1] == "clr"){
-    norm_counts = normalise_clr(count_matrix)
-  } else if(normalisation_method[1] == "cpm"){
-    norm_counts = normalise_cpm(count_matrix)
-  } else if(normalisation_method[1] == "none"){
-    print("Hmmmmm.....")
-    norm_counts = log2(count_matrix + 1)
-  } else {
-    stop("No suitable normalisation method chosen.")
+  norm_funcs = list()
+  norm_funcs$scran = normalise_scran
+  norm_funcs$clr   = normalise_clr
+  norm_funcs$cpm   = normalise_cpm
+  norm_funcs$none  = function(counts, ...) counts
+
+  norm_func = norm_funcs[[normalisation_method[1]]]
+  if (is.null(norm_func)) {
+      stop("Unknwon normalisation method chosen:", normalisation_method[1])
   }
+  normalisation_params = c(list(count_matrix), normalisation_params)
+  norm_counts = do.call(norm_func, normalisation_params)
 
   #gene selection
   if(gene_selection_method == "scran"){

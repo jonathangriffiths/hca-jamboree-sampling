@@ -2,6 +2,7 @@
 #'
 #' @name team13
 #' @docType package
+#' @import Matrix
 #' @import SingleCellExperiment
 #' @import scran
 #' @import scater

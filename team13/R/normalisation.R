@@ -1,17 +1,13 @@
 #log2 normalised count + 1 (sparse)
 normalise_scran = function(count_matrix){
-  require(SingleCellExperiment)
-  require(scran)
-  require(scater)
-  
   sce = SingleCellExperiment::SingleCellExperiment(assays = list(counts = count_matrix))
   qclust= scran::quickCluster(x = sce, method = "igraph", max.size = 3000, pc.approx = TRUE)
-  
+
   sce = scran::computeSumFactors(sce, clusters = qclust)
   sce = scater::normalise(sce)
-  
+
   return(SingleCellExperiment::logcounts(sce))
-    
+
 }
 
 #log2( (count + pseudocount) / geom_mean(across cell) )
