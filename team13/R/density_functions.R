@@ -4,7 +4,7 @@ get_kth_distances = function(dim_red, k = 5){
   return(knns$nn.dist[,ncol(knns$nn.dist)])
 }
 
-get_cell_densities = function(dim_red, k = 5){
+get_knn_densities = function(dim_red, k = 10){
   distances = get_kth_distances(dim_red, k=k)
   logvolumes = log(distances) * ncol(dim_red)
   return(-logvolumes)
