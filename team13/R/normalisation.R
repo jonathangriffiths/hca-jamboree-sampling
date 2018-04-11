@@ -10,10 +10,14 @@ normalise_scran = function(count_matrix){
 
 }
 
+gm_mean = function(x, na.rm=TRUE){
+  exp(sum(log(x[x > 0]), na.rm=na.rm) / length(x))
+}
+
 #log2( (count + pseudocount) / geom_mean(across cell) )
 normalise_clr = function(count_matrix, eps=1) {
     count_matrix = as.matrix(count_matrix) + eps
-    geom_mean = exp(rowSums(log(count_matrix)) / nrow(count_matrix))
+    geom_mean = apply(count_matrix, 2, gm_mean)
     norm_counts = count_matrix / matrix(geom_mean, nrow=nrow(count_matrix), ncol=ncol(count_matrix), byrow=TRUE)
     return(log2(norm_counts))
 }
