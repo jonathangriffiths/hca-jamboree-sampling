@@ -8,7 +8,7 @@ density_wrapper = function(count_matrix,
                    dimred_method = "pca",
                    dimred_params = list(),
                    density_method = c("knn", "none"),
-                   density_params = list())
+                   density_params = list()) {
 
   #QC
   qc_funcs = list()
@@ -60,7 +60,7 @@ density_wrapper = function(count_matrix,
   #densities
   density_funcs = list()
   density_funcs$knn = get_knn_densities
-  density_funcs$none = function(dimred, ...) { return NULL }
+  density_funcs$none = function(dimred, ...) { return(NULL) }
 
   density_func = density_funcs[[density_method[1]]]
   if (is.null(density_func)) {
