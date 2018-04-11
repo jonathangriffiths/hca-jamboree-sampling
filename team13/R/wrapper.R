@@ -35,7 +35,7 @@ density_wrapper = function(count_matrix,
   
   #dimension reduction
   if(dimred_method == "pca"){
-    dimred = dimred_pca(norm_counts, dims = 20)
+    dimred = dimred_pca(as.matrix(norm_counts), dims = 20)
   } else{
     stop("No suitable dimension reduction method chosen.")
   }
