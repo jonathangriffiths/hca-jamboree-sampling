@@ -1,4 +1,7 @@
-# Function should take a normalised log counts matrix and return a row-subsetted matrix
+# Functions should:
+# TAKE a normalised log counts matrix and 
+# RETURN a row-subsetted matrix
+# where important genes have been selected
 
 scran_select = function(count_matrix, max.mean = 1, min.mean = 1e-3, pval = 0.01){
   if(as.numeric(R.version$minor) >= 5){ #TODO: FIX JANKINESS

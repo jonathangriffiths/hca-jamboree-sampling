@@ -1,3 +1,5 @@
+# Functions should take a counts matrix and return it normalised and possibly variance stabilised (e.g. log)
+
 #log2 normalised count + 1 (sparse)
 normalise_scran = function(count_matrix){
   sce = SingleCellExperiment::SingleCellExperiment(assays = list(counts = count_matrix))

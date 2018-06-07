@@ -8,6 +8,7 @@ dimred_pca = function(count_matrix, dims = 20, scale = FALSE){
 }
 
 dimred_dmap = function(count_matrix, dims, scale = FALSE){
+  require(destiny)
   count_matrix = t(count_matrix)
   if(scale) {
     count_matrix = scale(count_matrix)

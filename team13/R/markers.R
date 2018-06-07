@@ -1,37 +1,67 @@
-select_cells = function(wrapper_out, 
-                        method = c("quantile", "mixmod"),
-                        quantile = 0.5){
-  #note that hits refers to a logical vector for low density cells
-  if(method == "quantile"){
-    hits = wrapper_out$densities <= quantile(wrapper_out$densities, quantile)
-  } else if(method == "mixmod"){
-    require(mixtools)
-    mixmod = normalmixEM(wrapper_out$densities, mu = c(min(wrapper_out$densities), max(wrapper_out$densities)))
-    small_dist = which.min(mixmod$mu)
-    hits = mixmod$posterior[,small_dist] > mixmod$posterior[,-small_dist]
-  } else{
-    "No suitable cell labelling method provided."
-  }
+### SELECT CELLS FUNCTIONS
+# INPUT cell density values
+# OUTPUT a list:
+#   hits = logical vector of cell selection
+#   plot = diagnostic plot of selected cells.
+
+select_cells_lowdensity_quantile = function(densities, quantile = 0.5, quantile_type = c("upper", "lower")){
+  hits = densities <= quantile(densities, quantile)
+  if(quantile_type == "upper")
+    hits = !hits
   
-  return(hits)
+  plot = ggplot(mapping = aes(x = densities, fill = hits)) +
+    geom_histogram(bins = 50) +
+    scale_fill_brewer(palette = "Paired", name = "Selected\ncell") +
+    labs(x = "Log-density", y = "Count")
+  
+  return(list(hits = hits, plot = plot))
+}
+
+select_cells_mixmod = function(densities, quantile_type = c("lower", "upper")){
+  require(mixtools)
+  mixmod = normalmixEM(densities, mu = c(min(densities), max(densities)))
+  small_dist = which.min(mixmod$mu)
+  hits = mixmod$posterior[,small_dist] > mixmod$posterior[,-small_dist]
+  if(quantile_type == "upper")
+    hits = !hits
+  
+  plot = ggplot(mapping = aes(x = densities, fill = hits)) +
+    geom_histogram(bins = 50) +
+    scale_fill_brewer(palette = "Paired", name = "Selected\ncell") +
+    labs(x = "Log-density", y = "Count")
+  
+  return(list(hits = hits, plot = plot))
   
 }
 
-find_genes = function(hits, model_counts, sample_fraction = 0.7, runs = 10, n_genes = 6){
+### FIND GENES FUNCTIONS
+# INPUT:
+#   hits - logical vector of low density cells; 
+#   model_counts - expression matrix (e.g. logcounts) for genes usable for sorting e.g. surface proteins
+# OUTPUT
+
+find_genes_lasso = function(hits, model_counts, sample_fraction = 0.7, runs = 10, n_genes = 6){
   require(glmnet)
   
-  list = lapply(1:runs, function(x){
+  main_model = glmnet(x= t(model_counts), y = as.numeric(hits), family = "binomial", alpha = 1, dfmax = n_genes)
+  main_hits = rownames(model_counts)[which(main_model$beta[, ncol(main_model$beta)-1]!=0)]
+  
+  #here we repear the glmnet run on randomly subsampled data
+  #this is a sort of robustness estimate on the lasso selections
+  subsamp = lapply(1:runs, function(x){
     retain = sample(length(hits), round(length(hits)*sample_fraction))
-    model = glmnet(x= t(model_counts[,retain]), y = as.numeric(hits[retain]), family = "binomial", alpha = 1, dfmax = 100)
+    model = glmnet(x= t(model_counts[,retain]), y = as.numeric(hits)[retain], family = "binomial", alpha = 1, dfmax = n_genes*2)
     hits = which(model$beta[, ncol(model$beta)-1]>0)
     return(names(hits))
   })
   
-  select = data.frame(gene = unique(unlist(list)),
-                      freq = sapply(unique(unlist(list)), function(x) sum(unlist(list)==x)))
   
+
+  select = data.frame(gene = unique(c(unlist(subsamp), main_hits)))
+  select$subsample.freq = sapply(select$gene, function(x) sum(unlist(subsamp)==x))
+
   select$mean.position = sapply(select$gene, function(x){
-    posns = sapply(list, function(part){
+    posns = sapply(subsamp, function(part){
       if(x %in% part){
         return(which(part == x))
       } else {
@@ -39,15 +69,14 @@ find_genes = function(hits, model_counts, sample_fraction = 0.7, runs = 10, n_ge
       }
     }
     )
-    
-    
     return(mean(posns, na.rm = TRUE))
   })
   
-  select$avg = sapply(1:nrow(select), function(i) mean(c(select$freq[i], 50-select$mean.position[i])))
-  select = select[order(-select$avg),]
+  select$main.hits = select$gene %in% main_hits
+  
+  select = select[order(-select$subsample.freq, select$mean.position),]
 
-  return(select$gene[1:n_genes])
+  return(list(genes = select$gene[1:n_genes], model = main_model))
   
 }
 

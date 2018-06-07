@@ -15,7 +15,7 @@ density_wrapper = function(count_matrix,
 
   qc_func = qc_funcs[[qc_method[1]]]
   if (is.null(qc_func)) {
-      stop("Unknwon QC method chosen: '", qc_method[1], "'")
+      stop("Unknown QC method chosen: '", qc_method[1], "'")
   }
   qc_params = c(list(count_matrix), qc_params)
   count_matrix = do.call(qc_func, qc_params)
@@ -29,10 +29,12 @@ density_wrapper = function(count_matrix,
 
   norm_func = norm_funcs[[normalisation_method[1]]]
   if (is.null(norm_func)) {
-      stop("Unknwon normalisation method chosen: '", normalisation_method[1], "'")
+      stop("Unknown normalisation method chosen: '", normalisation_method[1], "'")
   }
   normalisation_params = c(list(count_matrix), normalisation_params)
   norm_counts = do.call(norm_func, normalisation_params)
+  
+  all_gene_counts = norm_counts
 
   #gene selection
   gene_selection_funcs = list()
@@ -40,7 +42,7 @@ density_wrapper = function(count_matrix,
 
   gene_selection_func = gene_selection_funcs[[gene_selection_method[1]]]
   if (is.null(gene_selection_func)) {
-      stop("Unknwon gene selection method chosen: '", gene_selection_method[1], "'")
+      stop("Unknown gene selection method chosen: '", gene_selection_method[1], "'")
   }
   gene_selection_params = c(list(norm_counts), gene_selection_params)
   norm_counts = do.call(gene_selection_func, gene_selection_params)
@@ -51,7 +53,7 @@ density_wrapper = function(count_matrix,
 
   dimred_func = dimred_funcs[[dimred_method[1]]]
   if (is.null(dimred_func)) {
-      stop("Unknwon dimension reduction method chosen: '", dimred_method[1], "'")
+      stop("Unknown dimension reduction method chosen: '", dimred_method[1], "'")
   }
   dimred_params = c(list(norm_counts), dimred_params)
   dimred = do.call(dimred_func, dimred_params)
@@ -59,9 +61,34 @@ density_wrapper = function(count_matrix,
   #densities
   densities = get_cell_densities(dimred, k = density_k)
 
-  return(list(densities = densities, dimred = dimred, retained_counts = norm_counts))
+  return(list(densities = densities, dimred = dimred, all_expr = all_gene_counts))
 }
 
-select_markers = function(){
-  #TODO: Bo.
+select_markers = function(density_wrapper_out,
+                          gene_selection_method = c("quantile", "mixture_model"),
+                          cell_selection_params = list(),
+                          gate_gene_method = c("lasso")
+                          ){
+  #cell selection
+  cell_selection_funcs = list()
+  cell_selection_funcs$quantile = select_cells_quantile
+  cell_selection_funcs$mixmod = select_cells_mixmod
+  
+  cell_selection_func = cell_selection_funcs[[cell_selection_method[1]]]
+  if (is.null(cell_selection_func)) {
+    stop("Unknown dimension reduction method chosen: '", cell_selection_method[1], "'")
+  }
+  cell_selection_params = c(list(density_wrapper_out$densities), cell_selection_params)
+  cell_selection = do.call(cell_selection_func, cell_selection_params)
+  
+  #identify key genes
+  gate_gene_funcs = list()
+  gate_gene_funcs$lasso = find_genes_lasso
+  
+  gate_gene_func = gate_gene_funcs[[gate_gene_method[1]]]
+  if (is.null(gate_gene_func)) {
+    stop("Unknown dimension reduction method chosen: '", gate_gene_method[1], "'")
+  }
+  gate_gene_params = c(list(cell_selection$hits, density_wrapper_out$all_expr), gate_gene_params)
+  gate_gene = do.call(gate_gene_func, gate_gene_params)
 }

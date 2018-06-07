@@ -1,5 +1,5 @@
 #Functions should take a count matrix and return a column-subsetted counts matrix
-#after QC purposes.
+#after QC.
 
 qc_simple = function(count_matrix, mito.frac = 0.03, min.umis = 1000, max.umis=NULL) {
   count_matrix = count_matrix[, Matrix::colSums(count_matrix) >= min.umis]
