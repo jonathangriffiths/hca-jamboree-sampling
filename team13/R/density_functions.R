@@ -11,7 +11,8 @@ get_kth_distances = function(dim_red, k = 5){
   return(dist[,ncol(knns$dist)])
 }
 
-get_knn_densities = function(dim_red, k = 5){
+
+get_knn_densities = function(dim_red, k = 10){
   distances = get_kth_distances(dim_red, k=k)
   logvolumes = log(distances) * ncol(dim_red)
   return(-logvolumes)
@@ -27,3 +28,4 @@ get_kernel_densities = function(dim_red, k = 50, kernel_function = normal_kernel
   densities = apply(distances, 1, kernel_function)
   return(densities)
 }
+

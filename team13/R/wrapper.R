@@ -7,7 +7,8 @@ density_wrapper = function(count_matrix,
                    gene_selection_params = list(),
                    dimred_method = "pca",
                    dimred_params = list(),
-                   density_k = 10){
+                   density_method = c("knn", "none"),
+                   density_params = list()) {
 
   #QC
   qc_funcs = list()
@@ -59,7 +60,16 @@ density_wrapper = function(count_matrix,
   dimred = do.call(dimred_func, dimred_params)
 
   #densities
-  densities = get_cell_densities(dimred, k = density_k)
+  density_funcs = list()
+  density_funcs$knn = get_knn_densities
+  density_funcs$none = function(dimred, ...) { return(NULL) }
+
+  density_func = density_funcs[[density_method[1]]]
+  if (is.null(density_func)) {
+      stop("Unknwon density estimation method chosen: '", density_method[1], "'")
+  }
+  density_params = c(list(dimred), density_params)
+  densities = do.call(density_func, density_params)
 
   return(list(densities = densities, dimred = dimred, all_expr = all_gene_counts))
 }
